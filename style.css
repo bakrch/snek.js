@@ -1,0 +1,15 @@
+table {
+    border-collapse: collapse; /* Collapse the table borders */
+    margin: 20px auto; /* Center the table on the page */
+}
+
+/* Style the table cells to make them square, with a background color and border */
+td {
+    width: 35px; /* Set the width of each cell */
+    height: 35px; /* Set the height of each cell */
+    background-color: #2d3138; /* Light blue background */
+    border: 2px solid #83888f; /* Black border around each cell */
+    text-align: center; /* Center text in the cell */
+    vertical-align: middle; /* Vertically align text */
+    font-family: Arial, sans-serif;
+}
