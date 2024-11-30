@@ -4,6 +4,7 @@ const RIGHT = 1;
 const UP = 2;
 const DOWN = 3;
 const FOOD_COLOR = '#b54624';
+const EATEN_FOOD_COLOR = '#2d6938';
 const SNEK_COLOR = '#35db53';
 const BOARD_COLOR = '#2d3138';
 
@@ -34,14 +35,17 @@ export class Engine {
 
     this.checkIsOutOfBounds = this.checkIsOutOfBounds.bind(this);
     this.getNewTail = this.getNewTail.bind(this);
+    this.getChunkAt = this.getChunkAt.bind(this);
 
     this.readInput = this.readInput.bind(this);
 
     this.spawnFood = this.spawnFood.bind(this);
 
     this.moveSnek = this.moveSnek.bind(this);
-    this.moveSnekTail = this.moveSnekTail.bind(this);
+    this.moveSnekChunks = this.moveSnekChunks.bind(this);
     this.eatFood = this.eatFood.bind(this);
+    this.appendFood = this.appendFood.bind(this);
+
 
     this.drawSnek = this.drawSnek.bind(this);
     this.drawFood = this.drawFood.bind(this);
@@ -70,21 +74,29 @@ export class Engine {
   spawnFood() {
     const x = Math.floor(Math.random() * this.mapSize);
     const y = Math.floor(Math.random() * this.mapSize);
-    return { x, y };
+    return { x, y, eaten: false };
   }
 
   eatFood() {
-    if (this.tail.x == this.food.x && this.tail.y == this.food.y) {
-      this.preparedToEat = true;
-      this.oldTail = { x: this.tail.x, y: this.tail.y };
+    if (this.head.x == this.food.x && this.head.y == this.food.y) {
+      this.eating = true;
+      this.foodCounter = 0;
+      this.food.eaten = true;
     }
-    if (this.preparedToEat) {
-      this.preparedToEat = false;
-      this.snek.push(this.oldTail);
-      this.tail = this.snek[this.snek.length - 1];
-      this.tail.x = this.food.x;
-      this.tail.y = this.food.y;
+  }
+
+  appendFood() {
+    if (this.eating) {
+      if (this.foodCounter < this.snek.length) {
+        this.foodCounter++;
+      } else {
+        this.eating = false;
+        this.snek.push({ x: this.food.x, y: this.food.y });
+        this.tail = this.snek[this.snek.length - 1];
+        this.food = this.spawnFood();
+      }
     }
+
   }
 
   drawTable() {
@@ -98,31 +110,48 @@ export class Engine {
   }
 
   drawFood() {
-    console.log("drawing food")
-    colorCell(this.map, this.food.x, this.food.y, FOOD_COLOR);
+    if (this.food.eaten) {
+      colorCell(this.map, this.food.x, this.food.y, EATEN_FOOD_COLOR);
+    } else {
+      colorCell(this.map, this.food.x, this.food.y, FOOD_COLOR);
+    }
   }
 
   drawSnek() {
-    console.log(this.snek);
-    for (const hunk of this.snek) {
-      colorCell(this.map, hunk.x, hunk.y, SNEK_COLOR);
+    let log = '[';
+    for (const chunk of this.snek) {
+      log += ` {x: ${chunk.x} , y: ${chunk.y}}, `;
     }
-    //colorCell(this.map, this.snek[this.snek.length - 1].x, this.snek[this.snek.length - 1].y, BOARD_COLOR);
-    return { x: this.head.x, y: this.head.y };
+    log += ']';
+    console.log(log);
+    for (const chunk of this.snek) {
+      colorCell(this.map, chunk.x, chunk.y, SNEK_COLOR);
+    }
+  }
+
+  getChunkAt(idx) {
+    return this.snek[idx];
   }
 
   getNewTail() {
     return this.snek[this.snek.length - 2];
   }
 
-  moveSnekTail() {
+  moveChunk() {
     this.tail.x = this.getNewTail().x;
     this.tail.y = this.getNewTail().y;
-    //ABOVE
+  }
+
+  moveSnekChunks() {
+    for (let i = this.snek.length - 1; i > 0; i--) {
+      if (i === 0) continue;
+      this.snek[i].x = this.snek[i - 1].x;
+      this.snek[i].y = this.snek[i - 1].y;
+    }
   }
 
   moveSnek() {
-    this.moveSnekTail();
+    this.moveSnekChunks();
     switch (this.direction) {
       case UP:
         this.head.x--;
@@ -153,21 +182,34 @@ export class Engine {
   }
 
   update() {
+    this.eatFood();
+    this.appendFood();
     this.moveSnek();
     this.checkIsOutOfBounds();
-    this.eatFood();
-    this.drawTable();
-    this.drawSnek();
-    this.drawFood();
-    console.log("stop: " + this.stop);
     if (this.stop) {
-      clearInterval(this.intervalId);
+      clearInterval(this.updateIntervalId);
       console.log("Game over");
     }
   }
 
+  render() {
+    this.drawTable();
+    this.drawSnek();
+    this.drawFood();
+  }
+
   start() {
     this.prepare();
-    this.intervalId = setInterval(this.update.bind(this), 500);
+    this.updateIntervalId = setInterval(this.update.bind(this), 200);
+    this.renderIntervalId = setInterval(this.render.bind(this), 20);
   }
+}
+
+function logSnek(snek, prefix = '') {
+  let log = `${prefix}: [`;
+  for (const chunk of snek) {
+    log += ` {x: ${chunk.x} , y: ${chunk.y}}, `;
+  }
+  log += ']';
+  console.log(log);
 }

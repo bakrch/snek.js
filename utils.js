@@ -1,19 +1,16 @@
 export function generateTable(rows) {
-  // Create a table element
   const table = document.createElement("table");
 
-  // Loop through rows and columns to create table cells
   for (let i = 0; i < rows; i++) {
-    const row = document.createElement("tr");  // Create a row
+    const row = document.createElement("tr");
     for (let j = 0; j < rows; j++) {
-      const cell = document.createElement("td");  // Create a cell
-      cell.textContent = ``;  // Add text to the cell
-      row.appendChild(cell);  // Append cell to the row
+      const cell = document.createElement("td");
+      cell.textContent = ``;
+      row.appendChild(cell);
     }
-    table.appendChild(row);  // Append row to the table
+    table.appendChild(row);
   }
 
-  // Append the table to the div with id "table-container"
   return document.getElementById("table-container").appendChild(table);
 }
 
